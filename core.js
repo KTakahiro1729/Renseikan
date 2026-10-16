@@ -174,7 +174,7 @@ function foodAtMaster(s){if(!s.master.alive)return;
  const foods=roomItems(s,s.master.location).filter(i=>i.kind==='飲食物'&&!i.consumed);
  for(const food of foods){log(s,'MASTER_EATS',null,`主人が${food.name}を食べた`,{item:food.id});consumeFood(s,food,'master');}
 }
-function poisonBoundary(s){for(const effect of s.pendingEffects){if(!effect.active||effect.due>s.turn+1)continue;effect.active=false;
+function poisonBoundary(s){for(const effect of s.pendingEffects){if(!effect.active||effect.due>s.turn)continue;effect.active=false;
   if(effect.target==='master'){if(s.master.alive){
     if(effect.type==='C'){
       const imbalance=s.master.poisons.filter(x=>x.type==='C').reduce((a,x)=>a+(x.component==='a'?1:-1),0);
@@ -210,7 +210,7 @@ function advanceInternal(s,op){
   if(s.phase!=='night'||s.step!=='planning')throw Error('移動計画中ではありません');
   for(const p of s.players)if(!p.plan)p.plan={to:p.location,mode:'awake'};
   s.step='exploring';s.deviceFired=false;s.proposals=[];
-  for(const p of s.players)if(p.plan.mode==='bell')ringBell(s,p.id);
+  for(const p of s.players)if(p.plan.mode==='bell'){const old=p.location;p.location='大広間';p.sleeping=false;log(s,'BELL_MOVE',p.id,'鐘を鳴らすため一足早く大広間へ移動',{old,to:p.location});ringBell(s,p.id);}
   chooseMaster(s);
   for(const p of s.players){const old=p.location;p.location=p.plan.to;p.sleeping=['bed','sofa'].includes(p.plan.mode);
    log(s,'MOVE',p.id,`${old} → ${p.location}${p.sleeping?'（睡眠）':''}`,{old,to:p.location,mode:p.plan.mode});
@@ -218,6 +218,7 @@ function advanceInternal(s,op){
   if(s.master.bodyCarrier!==null){const carrier=s.players[s.master.bodyCarrier];s.master.bodyRoom=carrier.location;s.master.hidden=true;
    log(s,'BODY_MOVE',carrier.id,'遺体を移送し、隠した',{room:carrier.location});s.master.bodyCarrier=null;}
   for(const p of s.players)if(!p.sleeping&&!s.master.alive&&!s.master.hidden&&p.location===s.master.bodyRoom&&!p.knowsDeath){p.knowsDeath=true;clue(s,p,'遺体発見','この部屋に遺体がある。');}
+  poisonBoundary(s);
   const hall=s.players.filter(x=>x.location==='大広間').map(x=>x.id);
   s.hallHistory.push({turn:s.turn,people:hall});
   for(const p of s.players){p.plan=null;}
@@ -225,7 +226,6 @@ function advanceInternal(s,op){
  }
  if(op==='next'){
   if(s.phase!=='night'||s.step!=='exploring')throw Error('探索中ではありません');
-  poisonBoundary(s);
   if(s.master.alive&&s.turn===s.settings.illness)kill(s,'病死',[],null);
   const bed=s.players.filter(x=>x.location==='共同寝室').length;
   for(const p of s.players){if(!p.sleeping)continue;
@@ -236,7 +236,7 @@ function advanceInternal(s,op){
       (s.deviceFired||bed>=3||disruptive||(actor&&anotherStolen))?0.5:1;
     p.sleep+=amount; log(s,'SLEEP',p.id,`睡眠 +${amount}`,{amount,total:p.sleep});
   }
-  for(const p of s.players)p.sleeping=false;for(const n of s.bellNotifications||[])clue(s,s.players[n.id],'警鐘',`T${n.turn}に鐘が鳴った。`);s.bellNotifications=[];
+  for(const p of s.players)p.sleeping=false;
   if(s.turn>=8){startMorning(s);return;}
   s.turn++;s.step='planning';
   log(s,'TURN',null,`T${s.turn}：移動先を決定`);return;
@@ -263,7 +263,7 @@ function morningForcedSleep(s){for(const p of s.players){p.morningDone=false;
 function ringBell(s,id){if(s.lastBell+2>=s.turn)throw Error('警鐘はあと2ターン使用できません');
  s.lastBell=s.turn;s.bellHistory.push({turn:s.turn,id});
  log(s,'BELL',id,`${visibleName(s,id)}が警鐘を鳴らした`);
- for(const p of s.players){if(!p.sleeping&&!['共同寝室','地下室'].includes(p.location))(s.bellNotifications??=[]).push({id:p.id,turn:s.turn});}
+ for(const p of s.players){if(!p.sleeping&&!['共同寝室','地下室'].includes(p.location))clue(s,p,'警鐘',`T${s.turn}の移動前に鐘が鳴った。`);}
  device(s,'bell',null,id);
 }
 function doNightAction(s,id,cmd){const p=s.players[id];
