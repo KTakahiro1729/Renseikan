@@ -1,6 +1,6 @@
 import {createGame,advance,command,completeBallot,finalize,updateMasterSchedule,setCharacter,setTrigger,changeMotive,project,
  CHARS,ROOMS,DEFAULT_SCHEDULE,DEFAULT_ITEMS,MOTIVES,charOf,clock,triggerLabel,conditionLabel} from './core.js';
-const root=document.querySelector('#gm');const STORAGE='renjokan.host.v1';
+const root=document.querySelector('#gm');const STORAGE='renjokan.host.v2';
 const escaped=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const input=(id,label,val='')=>`<div class="field"><label for="${id}">${escaped(label)}</label><input id="${id}" value="${escaped(val)}"></div>`;
 const opt=(value,title,current)=>`<option value="${escaped(value)}" ${current===value?'selected':''}>${escaped(title)}</option>`;
@@ -71,7 +71,7 @@ const seatUrl=i=>new URL(`player.html#room=${encodeURIComponent(s.id)}&key=${enc
 root.addEventListener('change',async e=>{
  if(e.target.id==='importJson'){
   const f=e.target.files?.[0];if(!f)return;
-  try{const data=JSON.parse(await f.text());if(!data.state||!Array.isArray(data.keys)||data.keys.length!==5)throw Error('形式が異なります');
+  try{const data=JSON.parse(await f.text());if(data.state?.schema!==2||!Array.isArray(data.keys)||data.keys.length!==5)throw Error('形式が異なります');
    host=data;s=host.state;keys=host.keys;connect();save();render();toast('バックアップから復旧しました');}
   catch(ex){toast('読み込み失敗：'+ex.message,true);}
  }

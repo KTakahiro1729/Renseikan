@@ -1,6 +1,6 @@
 const root=document.querySelector('#player');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const b=(label,type,attrs='',cls='tiny')=>`<button class="${cls}" data-action="${esc(type)}" ${attrs}>${esc(label)}</button>`;
+const b=(label,type,attrs='',cls='tiny')=>`<button class="${cls}" data-action="${esc(type)}" ${attrs}>${esc(view?.costs?.[type]!=null?label.replace(/\d+pt/,view.costs[type]+'pt'):label)}</button>`;
 const tag=(label,cls='')=>`<span class="badge ${cls}">${esc(label)}</span>`;
 const sel=(id,opts,label)=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${opts.map(([v,t])=>`<option value="${esc(v)}">${esc(t)}</option>`).join('')}</select></div>`;
 function toast(t,error=false){const n=document.createElement('div');n.textContent=t;n.className=error?'error':'';document.querySelector('#flash').append(n);setTimeout(()=>n.remove(),4200);}
@@ -16,7 +16,7 @@ function connect(){try{channel?.close();}catch{}
  sessionStorage.setItem('renjokan.join',JSON.stringify({room,key}));
  announce();render();
 }
-function announce(){new BroadcastChannel(`renjokan:${room}:control`).postMessage({kind:'hello',key});}
+function announce(){const c=new BroadcastChannel(`renjokan:${room}:control`);c.postMessage({kind:'hello',key});c.close();}
 function send(payload){if(!room||!key)return toast('まずGMに接続してください',true);
  const id=Math.random().toString(36).slice(2);pending.set(id,true);
  const c=new BroadcastChannel(`renjokan:${room}:control`);
@@ -31,7 +31,7 @@ function admission(){return `<section class="panel" style="max-width:590px;margi
 const CHAR_NAMES={heir:'令嬢／御曹司',actor:'女優／俳優',writer:'作家',student:'学生',soldier:'軍人'};
 const actorName=(q,id)=>q.status.find(x=>x.id===id)?`${String.fromCharCode(65+id)}・${CHAR_NAMES[q.status[id].character]||q.status[id].character}`:`PC ${id+1}`;
 function phaseHeader(v){const p=v.player;
- return `<section class="panel"><div class="row spread"><div><div class="eyebrow">PERSONAL DOSSIER · PC ${String.fromCharCode(65+p.id)}</div><h2>${esc(p.character)}</h2><span class="subtle">${esc(p.location)} · ${v.phase==='night'?`T${v.turn} ${v.clock}`:v.phase==='morning'?`朝 ${v.morning}/5`:v.phase==='vote'?'最終投票':'結果'}</span></div>${tag(v.phase==='night'?v.step:v.phase,'blue')}</div>
+ return `<section class="panel"><div class="row spread"><div><div class="eyebrow">PERSONAL DOSSIER · PC ${String.fromCharCode(65+p.id)}</div><h2>${esc(CHAR_NAMES[p.character]||p.character)}</h2><span class="subtle">${esc(p.location)} · ${v.phase==='night'?`T${v.turn} ${v.clock}`:v.phase==='morning'?`朝 ${v.morning}/5`:v.phase==='vote'?'最終投票':'結果'}</span></div>${tag(v.phase==='night'?v.step:v.phase,'blue')}</div>
 <div class="cols3"><div class="stat"><strong>${p.ap}</strong><span class="subtle">AP</span></div><div class="stat"><strong>${p.sleep.toFixed(1)} / ${p.required}</strong><span class="subtle">睡眠</span></div><div class="stat"><strong>${p.commonScore+p.mainScore}</strong><span class="subtle">タスク得点</span></div></div>
 <div class="secret"><div class="eyebrow">SECRET MOTIVE · MAIN CARD</div><h3>${esc(p.mainCard.title)}</h3><p>${esc(p.mainCard.description)}</p><div class="small">メイン ${p.mainScore}点 ｜ 通常 ${p.commonScore}点 ｜ 推理点は別枠</div></div>
 <p class="subtle">${esc(v.roomNote)}　主人：${esc(v.masterPublic.status)}${v.masterPublic.location!=='不明'?'（'+esc(v.masterPublic.location)+'）':''}</p></section>`;}
@@ -50,40 +50,43 @@ function locationPanel(v){const p=v.player;let body='';
  return `<section class="panel"><h3>${v.phase==='night'&&v.step==='planning'?'次の行動を決める':'館内行動'}</h3>${body}</section>`;}
 function actions(v){let p=v.player,items=v.items,held=items.filter(x=>x.holder===p.id),here=items.filter(x=>x.room===p.location),other=v.status.filter(x=>x.id!==p.id&&x.location===p.location),awakeOther=other.filter(x=>!x.sleeping);
  const partnerOpts=awakeOther.map(x=>[x.id,actorName(v,x.id)]);
- const ownedOpts=held.map(i=>[i.id,i.name]),foods=held.filter(i=>i.kind==='飲食物'),poisons=held.filter(i=>i.name.includes('毒'));
+ const ownedOpts=held.map(i=>[i.id,i.name]),foods=held.filter(i=>i.kind==='飲食物'&&!i.consumed),poisons=held.filter(i=>i.ingredient);
  let html=`<h4>物品と調査</h4>`;
  for(const it of items){html+=`<div class="item"><div class="title-row"><strong>${esc(it.name)}</strong>${tag(it.holder===p.id?'所持中':it.lang||it.kind)}</div>
 <div class="subtle">${it.room===p.location?'この部屋にある':'所持中'} / ${esc(it.kind)} ${it.state!=='unused'?'／使用痕あり':''}</div><div class="row">${b('調べる 1pt','inspect',`data-item-id="${it.id}"`)}
 ${it.state!=='unused'?b('深く調べる +1pt','deep',`data-item-id="${it.id}"`):''}
-${it.room===p.location?b('持ち出す 1pt','take',`data-item-id="${it.id}"`):''}
+${it.room===p.location&&it.kind!=='設備'?b('持ち出す 1pt','take',`data-item-id="${it.id}"`):''}
 ${it.kind==='書籍'?b(`読む ${it.lang==='日本語'?1:2}pt`,'read',`data-item-id="${it.id}"`):''}
 ${it.holder===p.id?b('配置する 0pt','place',`data-item-id="${it.id}"`):''}
-${it.kind==='植物'&&it.room==='庭園'?b('採取する 1pt','harvest',`data-item-id="${it.id}"`):''}</div></div>`;}
+${it.kind==='植物'&&it.room===p.location?b('採取する 1pt','harvest',`data-item-id="${it.id}"`):''}${it.holder===p.id&&it.kind==='飲食物'&&!it.consumed?b('飲食する 1pt','eat',`data-item-id="${it.id}"`):''}${b('痕跡を工作','tamper',`data-item-id="${it.id}"`)}</div></div>`;}
  if(items.length===0)html+=`<p class="subtle">この部屋の可視物品はありません。</p>`;
  if(ownedOpts.length&&awakeOther.length)html+=`<div class="separator"></div><h4>譲渡</h4><div class="field-row">${sel('giveItem',ownedOpts,'渡す物品')}${sel('giveTo',partnerOpts,'相手')}</div>${b('0ptで譲渡','give','','primary')}`;
  if(foods.length&&poisons.length)html+=`<div class="separator"></div><h4>飲食物に混ぜる</h4><div class="field-row">${sel('mixFood',foods.map(i=>[i.id,i.name]),'飲食物')}${sel('mixPoison',poisons.map(i=>[i.id,i.name]),'薬品')}</div>${b('混入する 1pt','mix')}`;
  if(foods.length)html+=`<div class="separator"></div><h4>飲食物を渡す</h4>${sel('serveFood',foods.map(i=>[i.id,i.name]),'飲食物')}${sel('serveTo',[...awakeOther.map(o=>[o.id,actorName(v,o.id)]),['master','主人（同室時）']],'渡す相手')}${b('渡す 0pt','serve')}`;
- if(awakeOther.length)html+=`<div class="separator"></div><h4>同室での共同アクション</h4>${sel('partner',partnerOpts,'相手')}
+ if(awakeOther.length)html+=`<div class="separator"></div><h4>同室での共同アクション</h4>${sel('partner',partnerOpts,'相手')}${sel('jointPay',[[0,'相手が全額'],[1,'自分1AP'],[2,'自分が全額（2APまで）']],'自分の負担AP')}
 <div class="row">${p.location==='娯楽室'?b('囲碁 2pt','go')+b('ビリヤード 2pt','billiards'):''}
 ${b('誘導する 0pt','induce')}${items.some(it=>it.kind==='書籍')?b('一緒に読む','jointRead'):''}</div>${sel('jointBook',items.filter(i=>i.kind==='書籍').map(i=>[i.id,i.name]),'共同読書に使う本')}`;
  const room=p.location;
  html+=`<div class="separator"></div><h4>部屋固有の行動</h4><div class="row">
 ${room==='大広間'?b('守衛に話を聞く 2pt','guard'):''}
-${room==='主人室'?b('鎧武者を調べる 1pt','armor')+b('剣を外す 2pt','blade'):''}
+${room==='主人室'?b('鎧武者を調べる 1pt','armor')+b('剣を外す 2pt','blade')+b('暖炉を調べる 1pt','fireplace'):''}
 ${room==='食堂'?b('料理を作る 2pt','cook')+b('お茶を淹れる 1pt','tea'):''}
-${room==='共同寝室'&&other.length?b('睡眠中の相手から盗む 2pt','steal'):''}
+${room==='共同寝室'&&other.length?b('睡眠者を調べる 0pt','sleepInspect')+b('睡眠中の相手から盗む 2pt','steal'):''}
 ${room==='庭園'?b('1ターン休息・AP+2','rest'):''}
 ${b('隠し場所を捜索 1pt','roomSearch')}
-${v.masterPublic.location==='同室'?b('主人を殺す 3pt','kill')+b('主人を誘う 1pt','invite'):''}
+${v.masterPublic.location==='同室'?b('主人を殺す 3pt','kill')+b('主人を誘う','invite')+b('金品をねだる 1pt','askMoney'):''}
 ${v.masterPublic.status==='死亡が確認されている'&&v.masterPublic.location===room?b('遺体調査 1pt','body')+b('遺体を精査 1pt','deepBody')+b('遺体を隠す 2pt','hide')+b('次の移動先へ遺体を隠す 3pt','moveBody')+b('表情を工作 2pt','face')+b('現場を拭く 2pt','wipe'):''}</div>`;
- if(room==='共同寝室'&&other.length)html+=`${sel('stealTo',other.map(o=>[o.id,actorName(v,o.id)]),'窃盗対象')}`;
+ if(room==='共同寝室'&&other.length)html+=`${sel('stealTo',other.filter(o=>o.sleeping).map(o=>[o.id,actorName(v,o.id)]),'窃盗対象')}`;
  if(v.masterPublic.location==='同室')html+=sel('inviteRoom',v.roomNames.map(r=>[r,r]),'主人を誘う行先');
+ html+=sel('faceValue',['平穏','苦悶','驚愕','笑い'].map(x=>[x,x]),'工作後の表情');
+ if(room==='娯楽室'&&v.masterPublic.location==='同室')html+=b('主人と囲碁 2pt','masterGo')+b('主人とビリヤード 2pt','masterBilliards');
+ for(const proposal of v.proposals||[])html+=`<div class="notice">PC ${proposal.from+1}から ${esc(proposal.command.type)} の提案（提案者負担 ${proposal.command.pay}AP）${b('参加','acceptJoint',`data-proposal="${proposal.id}"`)}${b('断る','declineJoint',`data-proposal="${proposal.id}"`)}</div>`;
  return html;
 }
 function taskPanel(v){const p=v.player;return `<section class="panel"><h3>通常タスク（共通山札）</h3><p class="subtle">誰が達成しても同じ点数。達成時は無料で補充。未達成は1ptで破棄・補充できます。</p>
 ${p.hand.map(t=>`<div class="task"><div><strong>${esc(t.title)}</strong><span class="subtle">　${esc(t.id)}</span></div><div class="row"><span class="points">${t.points}点</span>${v.phase==='night'&&v.step==='exploring'&&!p.sleeping?b('破棄 1pt','discard',`data-task-id="${t.id}"`):''}</div></div>`).join('')}
 <p class="subtle">達成${p.completed}枚。次に引くカードは共通山札から補充されます。</p></section>`;}
-function cluePanel(v){const p=v.player;return `<section class="panel"><h3>取得した情報と証拠</h3><div class="log">${p.clues.slice().reverse().slice(0,120).map(x=>`<div class="event"><span class="time">${x.turn?'T'+x.turn:'朝'}</span>${tag(x.kind)} ${esc(x.text)}</div>`).join('')||'<p class="subtle" style="padding:10px">まだ情報はありません。</p>'}</div><div class="gap"></div><h3>秘密通信の受信</h3>${p.messages.length?p.messages.map(x=>`<div class="item"><div class="subtle">朝${x.turn}／PC ${String.fromCharCode(65+x.from)}から</div>${esc(x.text)}</div>`).join(''):'<p class="subtle">まだありません。</p>'}</section>`;}
+function cluePanel(v){const p=v.player;return `<section class="panel"><h3>取得した情報と証拠</h3><div class="log">${p.clues.slice().reverse().slice(0,120).map(x=>`<div class="event"><span class="time">${x.turn?'T'+x.turn:'朝'}</span>${tag(x.kind)} ${esc(x.text)}${v.phase==='morning'&&v.step==='talk'?b('会話相手へ共有','shareClue',`data-clue="${x.id}"`):''}</div>`).join('')||'<p class="subtle" style="padding:10px">まだ情報はありません。</p>'}</div><div class="gap"></div><h3>秘密通信の受信</h3>${p.messages.length?p.messages.map(x=>`<div class="item"><div class="subtle">朝${x.turn}／PC ${String.fromCharCode(65+x.from)}から</div>${esc(x.text)}</div>`).join(''):'<p class="subtle">まだありません。</p>'}</section>`;}
 function morningPanel(v){if(v.phase!=='morning')return '';
  const p=v.player,questionnaire=`<section class="panel"><h3>朝の殺害申告（GMのみ）</h3><div class="field"><label><input type="checkbox" id="qNear" ${p.questionnaire?.near?'checked':''}> 近接殺害した</label></div>
 <div class="field"><label><input type="checkbox" id="qRemote" ${p.questionnaire?.remote?'checked':''}> 遠隔殺害を試みた</label><input id="qRemoteText" placeholder="いつ・どの行動か" value="${esc(p.questionnaire?.remoteText||'')}"></div>
@@ -92,10 +95,10 @@ function morningPanel(v){if(v.phase!=='morning')return '';
  let indiv='';if(v.step==='individual'){
   indiv=p.morningDone?`<div class="notice">このフェーズの個別行動は終了しています。</div>`:
    `<p>1回だけ行動できます。APが不足する調査は不可。</p>${sel('investigateItem',v.roomNames.flatMap(r=>[]) .concat(v.items.map(x=>[x.id,x.name])),'調査対象（現地・所持）')}
-<div class="row">${b('調べる 1pt','investigate')}${b('深く調べる 2pt','investigateDeep')}${b('パス','skip')}</div><div class="separator"></div>
+<div class="row">${b('調べる 1pt','investigate')}${b('深く調べる 2pt','investigateDeep')}${b('パス','skip')}${b('遺体調査 1pt','investigateBody')}</div><div class="separator"></div>
 ${sel('messageTo',v.status.filter(q=>q.id!==p.id).map(q=>[q.id,actorName(v,q.id)]),'一方的な通信先')}
 <div class="field"><label>メッセージ本文</label><textarea id="messageText" placeholder="相手のみに送る情報を入力"></textarea></div>${b('一方的な私信 2pt','message')}`;
- }else indiv=`<div class="notice">現在はDiscordでの会話フェーズ。議長はPC ${String.fromCharCode(64+v.morning)}です。</div>`;
+ }else indiv=`${p.id===v.morning-1?sel('groupPartner',[['all','全員で会話'],...v.status.filter(q=>q.id!==p.id).map(q=>[q.id,actorName(v,q.id)])],'議長：組になる相手')+b('組分けを決定','conversation'):''}<p>${(v.conversation||[]).map(g=>g.map(i=>'PC '+(i+1)).join('・')).join(' ／ ')}</p><div class="notice">現在はDiscordでの会話フェーズ。議長はPC ${String.fromCharCode(64+v.morning)}です。</div>`;
  return `<section class="panel"><h3>朝${v.morning}：${v.step==='individual'?'個別行動':'会話'}</h3>${indiv}</section>${questionnaire}`;
 }
 function votePanel(v){if(v.phase!=='vote')return '';
@@ -120,14 +123,18 @@ root.addEventListener('click',e=>{
  if(e.target.closest('#submitPlan')){const mode=document.querySelector('input[name="planMode"]:checked')?.value||'awake';
   const to=selectedMove||view.player.plan?.to||view.player.location;send({type:'plan',to,mode});return;}
  const a=e.target.closest('[data-action]');if(!a)return;let type=a.dataset.action,itemId=a.dataset.itemId,payload={type,itemId};
+ if(type==='masterGo'||type==='masterBilliards'){send({type:type==='masterGo'?'go':'billiards',otherId:'master'});return;}
+ if(type==='acceptJoint'||type==='declineJoint'){send({type:'respondJoint',proposalId:a.dataset.proposal,accept:type==='acceptJoint'});return;}
+ if(type==='shareClue'){send({type,clueId:a.dataset.clue});return;}
+ if(type==='conversation'){send({type,partner:val('groupPartner')==='all'?null:Number(val('groupPartner'))});return;}
  if(type==='discard'){send({type,taskId:a.dataset.taskId});return;}
  if(type==='give'){payload.itemId=val('giveItem');payload.otherId=Number(val('giveTo'));}
  if(type==='mix'){payload.itemId=val('mixFood');payload.poisonId=val('mixPoison');}
  if(type==='serve'){payload.itemId=val('serveFood');payload.to=val('serveTo');}
- if(['go','billiards','jointRead','induce'].includes(type)){payload.otherId=Number(val('partner'));if(type==='jointRead')payload.itemId=val('jointBook');}
- if(type==='steal')payload.otherId=Number(val('stealTo'));
+ if(['go','billiards','jointRead','induce'].includes(type)){payload.otherId=Number(val('partner'));if(['go','billiards','jointRead'].includes(type))payload.pay=Number(val('jointPay'));if(type==='jointRead')payload.itemId=val('jointBook');}
+ if(['steal','sleepInspect'].includes(type))payload.otherId=Number(val('stealTo'));
  if(type==='invite')payload.to=val('inviteRoom');
- if(type==='face')payload.face='平穏';
+ if(type==='face')payload.face=val('faceValue')||'平穏';
  if(type==='message'){payload.to=val('messageTo');payload.text=val('messageText');}
  if(type==='investigate'||type==='investigateDeep'){payload.type='investigate';payload.itemId=val('investigateItem');payload.deep=type==='investigateDeep';}
  if(type==='vote')payload.value=val('ballotChoice');

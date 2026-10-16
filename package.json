@@ -4,6 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "node --test test.mjs"
+    "test": "node --test test.mjs rules.test.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node --check core.js && node --check gm.js && node --check player.js && npm test && npm run build"
   }
 }
