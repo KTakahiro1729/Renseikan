@@ -21,7 +21,7 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()
 export function createGame({schedule=DEFAULT_SCHEDULE, characters=CHARS.map(x=>x.id), trigger={type:'read',item:'secret',condition:'none'}, illness=8}={}){
  const players=characters.map((character,i)=>({id:i,character,motive:MOTIVES[Math.floor(Math.random()*MOTIVES.length)],target:null,
    location:'大広間',plan:null,ap:RULES.nightAP,sleep:0,required:RULES.requiredSleep,sleeping:false,readBooks:[],mainRead:[],
-   exploredTarget:GAME_DATA.explorationTarget,knownDevice:false,hasHerbGuide:character==='student',knownValues:[],
+   exploredTarget:GAME_DATA.explorationTarget,inspected:[],bodyInspected:false,knownDevice:false,hasHerbGuide:character==='student',knownValues:[],
    hand:[],commonScore:0,mainScore:0,mainFlags:[],mainWorks:[],mainHistory:[],
    clues:[],messages:[],personalLog:[],completed:0,questionnaire:null,vote:null,forcedSleep:0,
    morningDone:false,invites:0,poisonPenalty:0,knowsDeath:false,restedTurn:0,actedTurn:0}));
@@ -56,7 +56,7 @@ export function mainCard(p,s){
 }
 export function project(s,id){
  const p=s.players[id]; const seen=new Set(p.clues.map(x=>x.itemId).filter(Boolean));
- const viewItems=Object.values(s.items).filter(it=>it.holder===id || (s.phase==='morning'?it.room!==null:it.room===p.location));
+ const viewItems=Object.values(s.items).filter(it=>it.holder===id || (s.phase==='morning'?(it.room!==null||it.holder!==null):it.room===p.location));
  const status=s.players.map(q=>({id:q.id,character:q.character,
    location:q.id===id?q.location:(q.location===p.location&&!p.sleeping?q.location:null),
    isSelf:q.id===id,ready:q.id===id?!!q.plan:null,submittedVote:q.id===id?q.vote!==null:null,
@@ -64,7 +64,7 @@ export function project(s,id){
  return {rev:s.rev,phase:s.phase,step:s.step,turn:s.turn,morning:s.morning,
   costs:COSTS,proposals:(s.proposals||[]).filter(x=>x.to===id&&x.turn===s.turn),conversation:s.conversation||[[0,1,2,3,4]],roomId:s.id,roomNote:ROOM_NOTE[p.location],clock:s.turn?clock(s.turn):'—',
   player:{...p,hand:p.hand.map(t=>({...t})),mainCard:mainCard(p,s)},
-  masterPublic:p.knowsDeath ? {status:'死亡が確認されている',location:s.master.hidden?'不明':s.master.bodyRoom} :
+  masterPublic:p.knowsDeath ? {status:'死亡が確認されている',location:!p.sleeping&&s.master.bodyRoom===p.location&&!s.master.hidden?p.location:'不明'} :
     (s.master.alive&&s.master.location===p.location?{status:'生存',location:'同室'}:{status:'不明',location:'不明'}),
   items:viewItems.map(it=>({id:it.id,name:it.name,kind:it.kind,room:it.room,holder:it.holder,lang:it.lang,state:it.state,
     tampered:it.tampered,ingredient:!!it.effect,consumed:!!it.consumed})),
@@ -174,7 +174,7 @@ function foodAtMaster(s){if(!s.master.alive)return;
  const foods=roomItems(s,s.master.location).filter(i=>i.kind==='飲食物'&&!i.consumed);
  for(const food of foods){log(s,'MASTER_EATS',null,`主人が${food.name}を食べた`,{item:food.id});consumeFood(s,food,'master');}
 }
-function poisonBoundary(s){for(const effect of s.pendingEffects){if(!effect.active||effect.due>s.turn)continue;effect.active=false;
+function poisonBoundary(s){for(const effect of s.pendingEffects){if(!effect.active||effect.due>s.turn+1)continue;effect.active=false;
   if(effect.target==='master'){if(s.master.alive){
     if(effect.type==='C'){
       const imbalance=s.master.poisons.filter(x=>x.type==='C').reduce((a,x)=>a+(x.component==='a'?1:-1),0);
@@ -186,7 +186,7 @@ function poisonBoundary(s){for(const effect of s.pendingEffects){if(!effect.acti
     log(s,'POISON_EFFECT',effect.target,'毒の発症：AP−5、必要睡眠+2',{type:effect.type});
   }
  }}
-function chooseMaster(s){if(!s.master.alive)return;s.master.location=s.master.schedule[s.turn-1]||'主人室';foodAtMaster(s);}
+function chooseMaster(s){if(!s.master.alive)return;s.master.location=s.master.schedule[s.turn-1]||'主人室';log(s,'NPC_MOVE',null,'主人が予定に従い移動',{to:s.master.location});foodAtMaster(s);}
 function specialMotiveChange(s,p){if(p.mainHistory.some(x=>x.type==='diaryChanged'))return;
  if(Math.random()<0.5){const candidates=MOTIVES.filter(x=>x!==p.motive);const m=candidates[Math.floor(Math.random()*candidates.length)];changeMotive(s,p.id,m,null);
   p.mainHistory.push({type:'diaryChanged',turn:s.turn});}}
@@ -210,21 +210,23 @@ function advanceInternal(s,op){
   if(s.phase!=='night'||s.step!=='planning')throw Error('移動計画中ではありません');
   for(const p of s.players)if(!p.plan)p.plan={to:p.location,mode:'awake'};
   s.step='exploring';s.deviceFired=false;s.proposals=[];
+  for(const p of s.players)if(p.plan.mode==='bell')ringBell(s,p.id);
+  chooseMaster(s);
   for(const p of s.players){const old=p.location;p.location=p.plan.to;p.sleeping=['bed','sofa'].includes(p.plan.mode);
    log(s,'MOVE',p.id,`${old} → ${p.location}${p.sleeping?'（睡眠）':''}`,{old,to:p.location,mode:p.plan.mode});
   }
-  chooseMaster(s);
   if(s.master.bodyCarrier!==null){const carrier=s.players[s.master.bodyCarrier];s.master.bodyRoom=carrier.location;s.master.hidden=true;
    log(s,'BODY_MOVE',carrier.id,'遺体を移送し、隠した',{room:carrier.location});s.master.bodyCarrier=null;}
   for(const p of s.players)if(!p.sleeping&&!s.master.alive&&!s.master.hidden&&p.location===s.master.bodyRoom&&!p.knowsDeath){p.knowsDeath=true;clue(s,p,'遺体発見','この部屋に遺体がある。');}
   const hall=s.players.filter(x=>x.location==='大広間').map(x=>x.id);
   s.hallHistory.push({turn:s.turn,people:hall});
-  for(const p of s.players){if(p.plan.mode==='bell')ringBell(s,p.id);}
   for(const p of s.players){p.plan=null;}
   log(s,'EXPLORE',null,`T${s.turn}探索開始・主人は${s.master.location}`);return;
  }
  if(op==='next'){
   if(s.phase!=='night'||s.step!=='exploring')throw Error('探索中ではありません');
+  poisonBoundary(s);
+  if(s.master.alive&&s.turn===s.settings.illness)kill(s,'病死',[],null);
   const bed=s.players.filter(x=>x.location==='共同寝室').length;
   for(const p of s.players){if(!p.sleeping)continue;
     const thefts=s.events.filter(x=>x.turn===s.turn&&x.type==='STEAL');const disruptive=thefts.some(x=>s.players[x.actor]?.character!=='actor');
@@ -236,8 +238,7 @@ function advanceInternal(s,op){
   }
   for(const p of s.players)p.sleeping=false;for(const n of s.bellNotifications||[])clue(s,s.players[n.id],'警鐘',`T${n.turn}に鐘が鳴った。`);s.bellNotifications=[];
   if(s.turn>=8){startMorning(s);return;}
-  s.turn++;s.step='planning';poisonBoundary(s);
-  if(s.master.alive && s.turn===s.settings.illness)kill(s,'病死',[],null);
+  s.turn++;s.step='planning';
   log(s,'TURN',null,`T${s.turn}：移動先を決定`);return;
  }
  if(op==='talk'){
@@ -276,7 +277,7 @@ function doNightAction(s,id,cmd){const p=s.players[id];
  const take=()=>{
   requireIt();if(it.kind==='設備'||it.room!==p.location||it.holder!==null)throw Error('この場所にありません');
   if(p.location==='主人室'&&canMaster())throw Error('主人がいる間は物品を持ち出せません');
-  expense(p,COSTS[type]);clue(s,p,'客観証拠',describe(it),itemId);it.room=null;it.holder=id;it.carrier=id;touch(it);
+  expense(p,COSTS[type]);p.inspected??=[];if(!p.inspected.includes(itemId))p.inspected.push(itemId);clue(s,p,'客観証拠',describe(it),itemId);it.room=null;it.holder=id;it.carrier=id;touch(it);
   log(s,'TAKE',id,`${it.name}を持ち出した`,{itemId});scoreCommon(s,p,'take',{book:it.kind==='書籍'});if(p.motive==='探究'&&p.exploredTarget===it.id)scoreMain(s,p,'指定物品の入手',RULES.targetItemPoints);inform(s,p.location,id,`${it.name}を取得`);device(s,'take',itemId,id);
  };
  if(p.location==='主人室'&&canMaster()&&['inspect','deep','read','tamper','blade','jointRead'].includes(type))throw Error('主人が在室中は物品操作できません');
@@ -285,15 +286,15 @@ function doNightAction(s,id,cmd){const p=s.players[id];
  case 'sleepInspect':{if(!other||!other.sleeping||other.location!==p.location||p.location!=='共同寝室')throw Error('同室の睡眠者が必要');clue(s,p,'睡眠者',ownItems(s,other.id).map(x=>`${x.id}: ${x.name}`).join('、')||'所持品なし');log(s,'SLEEP_INSPECT',id,'睡眠者を調べた',{otherId});break;}
  case 'fireplace':{canRoom('主人室');expense(p,COSTS[type]);clue(s,p,'客観証拠','暖炉には燃え残った薪がある。');log(s,'FIREPLACE',id,'暖炉を調査');break;}
  case 'askMoney':{if(!canMaster())throw Error('主人が同室ではありません');if(p.askedMoney)throw Error('既に金品を受け取っています');expense(p,COSTS[type]);p.askedMoney=true;const gift=makeItem({id:uid('gift'),name:'主人からの小遣い',kind:'金銭',room:null,value:GAME_DATA.rules.giftValue});gift.holder=id;gift.source='gift';s.items[gift.id]=gift;log(s,'GIFT',id,'主人に金品をねだった');break;}
- case 'tamper':{requireIt();if(!accessible())throw Error('対象がありません');expense(p,GAME_DATA.rules.tamperAP);it.previous=describe(it);it.state='tampered';it.tampered=true;log(s,'TAMPER',id,'物品の痕跡を工作',{itemId});break;}
+ case 'tamper':{requireIt();if(it.tampered)throw Error('既に工作済みです');if(!accessible())throw Error('対象がありません');expense(p,GAME_DATA.rules.tamperAP);it.previous=describe(it);it.state='tampered';it.tampered=true;log(s,'TAMPER',id,'物品の痕跡を工作',{itemId});break;}
 
  case 'rest':{canRoom('庭園');if(p.actedTurn===s.turn)throw Error('休息するターンには他の探索行動を実行できません');p.ap+=2;p.restedTurn=s.turn;log(s,'REST',id,'庭園で休み、AP+2');break;}
  case 'roomSearch':{expense(p,COSTS[type]);if(!s.master.alive&&s.master.hidden&&s.master.bodyRoom===p.location){s.master.hidden=false;p.knowsDeath=true;clue(s,p,'遺体発見','この部屋の隠し場所で遺体を発見した。');log(s,'BODY_DISCOVERY',id,'隠された遺体を発見');}else clue(s,p,'探索','部屋の隠し場所を調べたが、遺体は見つからなかった。');break;}
- case 'inspect':{requireIt();if(!accessible())throw Error('物品がありません');expense(p,COSTS[type]);
+ case 'inspect':{requireIt();if(!accessible())throw Error('物品がありません');expense(p,COSTS[type]);p.inspected??=[];if(!p.inspected.includes(itemId))p.inspected.push(itemId);
   const deep=p.character==='writer';
   clue(s,p,'客観証拠',`${describe(it)}${deep&&it.state!=='unused'?'／過去の描写：'+it.previous:''}`,itemId);
   log(s,'INSPECT',id,`${it.name}を調べた`,{itemId});scoreCommon(s,p,'inspect',{used:it.state!=='unused'});inform(s,p.location,id,`${it.name}を調査`);break;}
- case 'deep':{requireIt();if(!accessible()||it.state==='unused')throw Error('精査できません');expense(p,COSTS[type]);
+ case 'deep':{requireIt();if(!p.inspected?.includes(itemId))throw Error('先に通常調査が必要です');if(!accessible()||it.state==='unused')throw Error('精査できません');expense(p,COSTS[type]);
   clue(s,p,'客観証拠',`${it.name}の以前の描写：${it.previous}。${it.tampered?'証拠工作の痕跡が残っている。':''}`,itemId);
   log(s,'DEEP',id,`${it.name}を深く調べた`,{itemId});break;}
  case 'take':take();break;
@@ -387,12 +388,15 @@ function doNightAction(s,id,cmd){const p=s.players[id];
  case 'body':case 'deepBody':case 'face':case 'hide':case 'moveBody':case 'wipe':{
   if(s.master.alive||s.master.bodyRoom!==p.location)throw Error('この部屋に遺体がありません');
   if(type==='moveBody'&&s.turn===8)throw Error('最後のターンでは次の移動先がありません');
+  if(type==='deepBody'&&!p.bodyInspected)throw Error('先に遺体の通常調査が必要です');
+  if(type==='wipe'&&s.master.cleaned)throw Error('既に清掃済みです');
+  if(type==='body')p.bodyInspected=true;
   const cost=COSTS[type];expense(p,cost);
   if(type==='body'||type==='deepBody')clue(s,p,'検死',`遺体：${s.master.face}の表情。${s.master.traces.map(x=>x.kind).join('、')||'目立つ痕跡なし'}。${type==='deepBody'||p.character==='writer'?'以前の痕跡：'+(s.master.previousTraces||s.master.traces).map(x=>x.kind).join('、'):''}${ownItems(s,id).some(x=>x.id==='forensic')?'／死亡：夜の'+(s.master.death.at<=4?'前半':'後半')+'。刺し傷は死亡時のもの。':''}`);
   if(type==='face'){if(!['平穏','苦悶','驚愕','笑い'].includes(face))throw Error('表情が不正');s.master.face=face;s.master.traces.push({kind:'表情の工作',turn:s.turn});}
   if(type==='hide')s.master.hidden=true;
   if(type==='moveBody'){s.master.hidden=true;s.master.bodyCarrier=id;s.master.bodyRoom=null;}
-  if(type==='wipe'){s.master.previousTraces=structuredClone(s.master.traces);s.master.traces=s.master.traces.filter(x=>!['血痕','吐瀉物'].includes(x.kind));s.master.traces.push({kind:'清掃の痕跡',turn:s.turn});}
+  if(type==='wipe'){s.master.cleaned=true;s.master.previousTraces=structuredClone(s.master.traces);s.master.traces=s.master.traces.filter(x=>!['血痕','吐瀉物'].includes(x.kind));s.master.traces.push({kind:'清掃の痕跡',turn:s.turn});}
   log(s,'BODY',id,`遺体への行為：${type}`,{kind:type});scoreCommon(s,p,({body:'body',face:'face',wipe:'wipe'})[type]||'none');
   if(p.motive==='殺意'&&['face','hide','moveBody','wipe'].includes(type)&&p.mainWorks.length<2&&!p.mainWorks.includes(type)){
    const category=['hide','moveBody'].includes(type)?'遺体の隠匿・移送':type;
@@ -403,12 +407,14 @@ function doNightAction(s,id,cmd){const p=s.players[id];
   log(s,'STEAL',id,`${other.id+1}番から物品を盗む`,{victim:other.id,itemId:target.id});
   if(p.motive==='嫌悪'&&p.target===other.id)scoreMain(s,p,'嫌悪対象から盗む',RULES.theftPoints);break;}
  case 'invite':{if(!canMaster())throw Error('主人が同室ではありません');if(s.master.invites>=2||!s.master.alive)throw Error('主人はこれ以上招待に応じません');expense(p,RULES.inviteAP);
+  if(!s.master.schedule.some((x,i)=>i>=s.turn&&x==='主人室'))throw Error('変更可能な主人室の予定がありません');
+  if(!Object.hasOwn(ROOMS,to)||to==='主人室')throw Error('主人室以外の招待先を指定してください');
   s.master.invites++;
-  // 招待ターンに主人を招待者の部屋へ移す。元の在室枠を先頭から1つ消費する。
-  const idx=s.master.schedule.findIndex((x,i)=>i>=s.turn-1&&x==='主人室');
+  // 未来の在室予定を先頭から1枠変更する。即時移動はしない。
+  const idx=s.master.schedule.findIndex((x,i)=>i>=s.turn&&x==='主人室');
   if(idx>=0)s.master.schedule[idx]=ROOMS.hasOwnProperty(to)?to:p.location;
   const destination=ROOMS.hasOwnProperty(to)?to:p.location;
-  s.master.location=destination;foodAtMaster(s);
+  // Only the future schedule changes; the NPC remains here this turn.
   log(s,'INVITE',id,`主人を${destination}へ誘った`,{consumedSlot:idx+1});scoreCommon(s,p,'invite');break;}
  case 'induce':{if(!p.knownDevice)throw Error('この装置についての知識が必要です');if(!other||other.id===id||other.location!==p.location||other.sleeping)throw Error('対象が同室にいません');
   log(s,'INDUCE',id,`${other.id+1}番を特定の行動へ誘導`,{target:other.id,trigger:s.settings.trigger.type});
@@ -473,11 +479,16 @@ function commandInternal(s,id,cmd){
    log(s,'MESSAGE',id,`${dest.id+1}番へ一方向メッセージ`,{to:dest.id});return;
   }
   if(cmd.type==='investigateBody'){
-  if(s.master.alive||s.master.hidden)throw Error('遺体が発見されていません');expense(p,cmd.deep&&p.character!=='writer'?COSTS.inspect+COSTS.deep:COSTS.inspect);
+  if(s.master.alive)throw Error('遺体がありません');if(cmd.deep&&!p.bodyInspected)throw Error('先に遺体の通常調査が必要です');p.bodyInspected=true;expense(p,cmd.deep&&p.character!=='writer'?COSTS.inspect+COSTS.deep:COSTS.inspect);
   clue(s,p,'検死',`遺体：${s.master.face}。${s.master.traces.map(x=>x.kind).join('、')}。${cmd.deep||p.character==='writer'?'以前の痕跡：'+(s.master.previousTraces||s.master.traces).map(x=>x.kind).join('、'):''}${ownItems(s,id).some(x=>x.id==='forensic')?'／死亡は夜の'+(s.master.death.at<=4?'前半':'後半'):''}`);p.morningDone=true;log(s,'MORNING_BODY',id,'朝に遺体を調査');return;
  }
- if(cmd.type==='investigate'){
-   const it=s.items[cmd.itemId];if(!it || !(it.holder===id || it.room!==null))throw Error('調査可能な物品ではありません');expense(p,cmd.deep&&p.character!=='writer'?COSTS.inspect+COSTS.deep:COSTS.inspect);
+ if(cmd.type==='morningTake'){
+   const it=s.items[cmd.itemId];if(!it||it.holder!==null||it.room===null||it.kind==='設備')throw Error('他人の所持品・設備は取得できません');
+   expense(p,COSTS.take);p.inspected??=[];if(!p.inspected.includes(it.id))p.inspected.push(it.id);clue(s,p,'客観証拠',describe(it),it.id);
+   it.holder=id;it.room=null;it.carrier=id;touch(it);p.morningDone=true;log(s,'MORNING_TAKE',id,'朝に物品を取得',{itemId:it.id});return;
+  }
+  if(cmd.type==='investigate'){
+   const it=s.items[cmd.itemId];if(!it || (it.holder===null&&it.room===null))throw Error('調査可能な物品ではありません');if(cmd.deep&&!p.inspected?.includes(it.id))throw Error('先に通常調査が必要です');p.inspected??=[];if(!p.inspected.includes(it.id))p.inspected.push(it.id);expense(p,cmd.deep&&p.character!=='writer'?COSTS.inspect+COSTS.deep:COSTS.inspect);
    clue(s,p,'朝の調査',`${it.name}：${(cmd.deep||p.character==='writer')?`以前の描写=${it.previous}／`:''}現在=${describe(it)}。${it.tampered?'証拠隠滅の痕跡あり。':''}`,it.id);
    p.morningDone=true;log(s,'MORNING_INSPECT',id,`朝：${it.name}を調査`,{itemId:it.id,deep:!!cmd.deep});return;
   }

@@ -94,8 +94,8 @@ function morningPanel(v){if(v.phase!=='morning')return '';
 <button data-action="questionnaire">申告を提出</button></section>`;
  let indiv='';if(v.step==='individual'){
   indiv=p.morningDone?`<div class="notice">このフェーズの個別行動は終了しています。</div>`:
-   `<p>1回だけ行動できます。APが不足する調査は不可。</p>${sel('investigateItem',v.roomNames.flatMap(r=>[]) .concat(v.items.map(x=>[x.id,x.name])),'調査対象（現地・所持）')}
-<div class="row">${b('調べる 1pt','investigate')}${b('深く調べる 2pt','investigateDeep')}${b('パス','skip')}${b('遺体調査 1pt','investigateBody')}</div><div class="separator"></div>
+   `<p>1回だけ行動できます。APが不足する調査は不可。</p>${sel('investigateItem',v.roomNames.flatMap(r=>[]) .concat(v.items.map(x=>[x.id,x.name])),'調査対象（全館・他人の所持品を含む）')}
+<div class="row">${b('調べる 1pt','investigate')}${b('深く調べる 2pt','investigateDeep')}${b('パス','skip')}${b('取得する 1pt','morningTake')}${b('遺体調査 1pt','investigateBody')}${b('遺体を深く調べる 2pt','investigateBodyDeep')}</div><div class="separator"></div>
 ${sel('messageTo',v.status.filter(q=>q.id!==p.id).map(q=>[q.id,actorName(v,q.id)]),'一方的な通信先')}
 <div class="field"><label>メッセージ本文</label><textarea id="messageText" placeholder="相手のみに送る情報を入力"></textarea></div>${b('一方的な私信 2pt','message')}`;
  }else indiv=`${p.id===v.morning-1?sel('groupPartner',[['all','全員で会話'],...v.status.filter(q=>q.id!==p.id).map(q=>[q.id,actorName(v,q.id)])],'議長：組になる相手')+b('組分けを決定','conversation'):''}<p>${(v.conversation||[]).map(g=>g.map(i=>'PC '+(i+1)).join('・')).join(' ／ ')}</p><div class="notice">現在はDiscordでの会話フェーズ。議長はPC ${String.fromCharCode(64+v.morning)}です。</div>`;
@@ -136,6 +136,8 @@ root.addEventListener('click',e=>{
  if(type==='invite')payload.to=val('inviteRoom');
  if(type==='face')payload.face=val('faceValue')||'平穏';
  if(type==='message'){payload.to=val('messageTo');payload.text=val('messageText');}
+ if(type==='morningTake')payload.itemId=val('investigateItem');
+ if(type==='investigateBodyDeep'){payload.type='investigateBody';payload.deep=true;}
  if(type==='investigate'||type==='investigateDeep'){payload.type='investigate';payload.itemId=val('investigateItem');payload.deep=type==='investigateDeep';}
  if(type==='vote')payload.value=val('ballotChoice');
  if(type==='questionnaire')payload={type,near:document.querySelector('#qNear')?.checked,remote:document.querySelector('#qRemote')?.checked,
