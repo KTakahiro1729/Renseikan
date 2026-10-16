@@ -41,7 +41,7 @@ run();
  advance(s,'start');for(let i=0;i<5;i++)command(s,i,{type:'plan',to:i===0?'主人室':'大広間',mode:'awake'});
  advance(s,'explore');const tea=s.items.drink;tea.holder=0;tea.room=null;tea.poison={type:'A',actor:0};
  command(s,0,{type:'place',itemId:'drink'});assert.equal(s.pendingEffects.length,1);
- assert.equal(s.master.death,null);advance(s,'next');
+ assert.equal(s.master.death,null);advance(s,'next');assert(s.master.alive);advance(s,'explore');
  assert.equal(s.master.death.cause,'毒殺');
  assert.equal(s.master.traces.some(x=>x.kind==='吐瀉物'),false);
 }
@@ -51,7 +51,7 @@ run();
  advance(s,'explore');const tea=s.items.drink;tea.holder=0;tea.room=null;tea.poison={type:'B',actor:0};
  command(s,0,{type:'place',itemId:'drink'});advance(s,'next');assert.equal(s.master.alive,true);
  for(let i=0;i<5;i++)command(s,i,{type:'plan',to:s.players[i].location,mode:'awake'});
- advance(s,'explore');advance(s,'next');assert.equal(s.master.death.cause,'毒殺');
+ advance(s,'explore');advance(s,'next');advance(s,'explore');assert.equal(s.master.death.cause,'毒殺');
  assert.equal(s.master.traces.some(x=>x.kind==='吐瀉物'),true);
 }
 console.log('Toxin boundary tests: PASSED');

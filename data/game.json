@@ -1,0 +1,923 @@
+{
+  "version": 2,
+  "rooms": [
+    {
+      "name": "大広間",
+      "floor": 1,
+      "description": "守衛、館の時計、警鐘、ソファー。"
+    },
+    {
+      "name": "食堂",
+      "floor": 1,
+      "description": "厨房。調理、お茶、飲食。"
+    },
+    {
+      "name": "娯楽室",
+      "floor": 1,
+      "description": "囲碁盤とビリヤード台。"
+    },
+    {
+      "name": "図書室",
+      "floor": 1,
+      "description": "多言語の書籍と資料。"
+    },
+    {
+      "name": "庭園",
+      "floor": 1,
+      "description": "さまざまな植物。"
+    },
+    {
+      "name": "共同寝室",
+      "floor": 2,
+      "description": "共同の寝台。睡眠者からの窃盗。"
+    },
+    {
+      "name": "主人室",
+      "floor": 2,
+      "description": "鎧武者と暖炉。館主が滞在する。"
+    },
+    {
+      "name": "倉庫",
+      "floor": 2,
+      "description": "財物が保管される場所。"
+    },
+    {
+      "name": "地下室",
+      "floor": 0,
+      "description": "古い品々が置かれた地下室。"
+    }
+  ],
+  "characters": [
+    {
+      "id": "heir",
+      "name": "令嬢／御曹司",
+      "lang": [
+        "英語",
+        "フランス語"
+      ],
+      "targets": [
+        "actor",
+        "student"
+      ],
+      "desc": "館主の第二子。高価な宝石を所持。"
+    },
+    {
+      "id": "actor",
+      "name": "女優／俳優",
+      "lang": [
+        "英語",
+        "フランス語"
+      ],
+      "targets": [
+        "heir",
+        "soldier"
+      ],
+      "desc": "館主の第一子。睡眠中の盗難に強い。"
+    },
+    {
+      "id": "writer",
+      "name": "作家",
+      "lang": [
+        "英語",
+        "ドイツ語",
+        "フランス語"
+      ],
+      "targets": [
+        "heir",
+        "actor",
+        "student",
+        "soldier"
+      ],
+      "desc": "怪奇小説家。物品を調べると深い情報も得る。"
+    },
+    {
+      "id": "student",
+      "name": "学生",
+      "lang": [
+        "英語",
+        "ドイツ語"
+      ],
+      "targets": [
+        "heir",
+        "writer"
+      ],
+      "desc": "医学部学生。薬草学の本を所持。"
+    },
+    {
+      "id": "soldier",
+      "name": "軍人",
+      "lang": [
+        "英語",
+        "ドイツ語",
+        "中国語"
+      ],
+      "targets": [
+        "actor",
+        "student"
+      ],
+      "desc": "陸軍下級将校。サーベルを所持。"
+    }
+  ],
+  "motives": [
+    "殺意",
+    "金銭",
+    "探究",
+    "親密",
+    "嫌悪"
+  ],
+  "schedule": [
+    "主人室",
+    "食堂",
+    "主人室",
+    "大広間",
+    "主人室",
+    "図書室",
+    "主人室",
+    "庭園"
+  ],
+  "items": [
+    {
+      "id": "jewel",
+      "name": "高価な宝石",
+      "kind": "宝石",
+      "room": "倉庫",
+      "value": 4,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "高価な宝石。まだ使用された様子はない。",
+        "used": "高価な宝石。扱われた跡が残っている。",
+        "tampered": "高価な宝石。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "gold",
+      "name": "金細工",
+      "kind": "金細工",
+      "room": "倉庫",
+      "value": 3,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "金細工。まだ使用された様子はない。",
+        "used": "金細工。扱われた跡が残っている。",
+        "tampered": "金細工。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "tool",
+      "name": "工具",
+      "kind": "工具",
+      "room": "倉庫",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "工具。まだ使用された様子はない。",
+        "used": "工具。扱われた跡が残っている。",
+        "tampered": "工具。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "orb",
+      "name": "天球儀",
+      "kind": "天球儀",
+      "room": "大広間",
+      "value": 5,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "天球儀。まだ使用された様子はない。",
+        "used": "天球儀。扱われた跡が残っている。",
+        "tampered": "天球儀。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "clock",
+      "name": "懐中時計",
+      "kind": "懐中時計",
+      "room": "大広間",
+      "value": 2,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "懐中時計。まだ使用された様子はない。",
+        "used": "懐中時計。扱われた跡が残っている。",
+        "tampered": "懐中時計。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "knife",
+      "name": "包丁",
+      "kind": "凶器",
+      "room": "食堂",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "包丁。まだ使用された様子はない。",
+        "used": "包丁。扱われた跡が残っている。",
+        "tampered": "包丁。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "drink",
+      "name": "紅茶",
+      "kind": "飲食物",
+      "room": "食堂",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "紅茶。まだ使用された様子はない。",
+        "used": "紅茶。扱われた跡が残っている。",
+        "tampered": "紅茶。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "mask",
+      "name": "謎の仮面",
+      "kind": "仮面",
+      "room": "娯楽室",
+      "value": 1,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "謎の仮面。まだ使用された様子はない。",
+        "used": "謎の仮面。扱われた跡が残っている。",
+        "tampered": "謎の仮面。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "ornament",
+      "name": "謎の置物",
+      "kind": "置物",
+      "room": "娯楽室",
+      "value": 3,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "謎の置物。まだ使用された様子はない。",
+        "used": "謎の置物。扱われた跡が残っている。",
+        "tampered": "謎の置物。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "sword",
+      "name": "鎧武者の剣",
+      "kind": "凶器",
+      "room": "主人室",
+      "value": 2,
+      "lang": "日本語",
+      "text": "",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "鎧武者の剣。まだ使用された様子はない。",
+        "used": "鎧武者の剣。扱われた跡が残っている。",
+        "tampered": "鎧武者の剣。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "herbA",
+      "name": "毒草A",
+      "kind": "植物",
+      "room": "庭園",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "effect": "A",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "毒草A。まだ使用された様子はない。",
+        "used": "毒草A。扱われた跡が残っている。",
+        "tampered": "毒草A。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "herbB",
+      "name": "毒草B",
+      "kind": "植物",
+      "room": "庭園",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "effect": "B",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "毒草B。まだ使用された様子はない。",
+        "used": "毒草B。扱われた跡が残っている。",
+        "tampered": "毒草B。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "herbCa",
+      "name": "毒物C原料a",
+      "kind": "植物",
+      "room": "庭園",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "effect": "C",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "毒物C原料a。まだ使用された様子はない。",
+        "used": "毒物C原料a。扱われた跡が残っている。",
+        "tampered": "毒物C原料a。表面を拭い、手を加えた跡がある。"
+      },
+      "component": "a"
+    },
+    {
+      "id": "herbCb",
+      "name": "毒物C原料b",
+      "kind": "植物",
+      "room": "庭園",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "effect": "C",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "毒物C原料b。まだ使用された様子はない。",
+        "used": "毒物C原料b。扱われた跡が残っている。",
+        "tampered": "毒物C原料b。表面を拭い、手を加えた跡がある。"
+      },
+      "component": "b"
+    },
+    {
+      "id": "herbSleep",
+      "name": "睡眠用ハーブ",
+      "kind": "植物",
+      "room": "図書室",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "effect": "sleep",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "睡眠用ハーブ。まだ使用された様子はない。",
+        "used": "睡眠用ハーブ。扱われた跡が残っている。",
+        "tampered": "睡眠用ハーブ。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "antidote",
+      "name": "解毒剤",
+      "kind": "植物",
+      "room": "地下室",
+      "value": 0,
+      "lang": "日本語",
+      "text": "",
+      "effect": "antidote",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "解毒剤。まだ使用された様子はない。",
+        "used": "解毒剤。扱われた跡が残っている。",
+        "tampered": "解毒剤。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "dict",
+      "name": "外国語辞典",
+      "kind": "書籍",
+      "room": "図書室",
+      "value": 0,
+      "lang": "日本語",
+      "text": "あらゆる外国語の解読に使える。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "外国語辞典。まだ使用された様子はない。",
+        "used": "外国語辞典。扱われた跡が残っている。",
+        "tampered": "外国語辞典。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "secret",
+      "name": "星辰仕掛けの覚書",
+      "kind": "書籍",
+      "room": "図書室",
+      "value": 1,
+      "lang": "ドイツ語",
+      "text": "鎧武者は特定の行為を契機に動く。作動条件はGMの設定による。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "星辰仕掛けの覚書。まだ使用された様子はない。",
+        "used": "星辰仕掛けの覚書。扱われた跡が残っている。",
+        "tampered": "星辰仕掛けの覚書。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "diary",
+      "name": "館主の日記",
+      "kind": "書籍",
+      "room": "主人室",
+      "value": 1,
+      "lang": "日本語",
+      "text": "主人は家族や招待者について秘密を記している。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "館主の日記。まだ使用された様子はない。",
+        "used": "館主の日記。扱われた跡が残っている。",
+        "tampered": "館主の日記。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "will",
+      "name": "館主の遺言状",
+      "kind": "書籍",
+      "room": "主人室",
+      "value": 2,
+      "lang": "日本語",
+      "text": "家族への思いが綴られている。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "館主の遺言状。まだ使用された様子はない。",
+        "used": "館主の遺言状。扱われた跡が残っている。",
+        "tampered": "館主の遺言状。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "herbal",
+      "name": "薬草図鑑",
+      "kind": "書籍",
+      "room": "図書室",
+      "value": 1,
+      "lang": "日本語",
+      "text": "毒草Aは1時間、毒草Bは2時間後に発症。毒物Cは配合量の差が2時間継続すると発症。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "薬草図鑑。まだ使用された様子はない。",
+        "used": "薬草図鑑。扱われた跡が残っている。",
+        "tampered": "薬草図鑑。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "forensic",
+      "name": "検死手順書",
+      "kind": "書籍",
+      "room": "地下室",
+      "value": 1,
+      "lang": "日本語",
+      "text": "遺体の傷、死後損傷、夜の前半・後半を調べる方法がある。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "検死手順書。まだ使用された様子はない。",
+        "used": "検死手順書。扱われた跡が残っている。",
+        "tampered": "検死手順書。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "goGuide",
+      "name": "囲碁の心得",
+      "kind": "書籍",
+      "room": "図書室",
+      "value": 1,
+      "lang": "日本語",
+      "text": "囲碁の心得。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "囲碁の心得。まだ使用された様子はない。",
+        "used": "囲碁の心得。扱われた跡が残っている。",
+        "tampered": "囲碁の心得。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "billiardGuide",
+      "name": "ビリヤードの心得",
+      "kind": "書籍",
+      "room": "娯楽室",
+      "value": 1,
+      "lang": "英語",
+      "text": "ビリヤードの心得。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "ビリヤードの心得。まだ使用された様子はない。",
+        "used": "ビリヤードの心得。扱われた跡が残っている。",
+        "tampered": "ビリヤードの心得。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "novel",
+      "name": "怪奇小説",
+      "kind": "書籍",
+      "room": "図書室",
+      "value": 2,
+      "lang": "日本語",
+      "text": "大正の怪奇小説。娯楽本。",
+      "entertainment": true,
+      "descriptions": {
+        "unused": "怪奇小説。まだ使用された様子はない。",
+        "used": "怪奇小説。扱われた跡が残っている。",
+        "tampered": "怪奇小説。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "play",
+      "name": "仏語戯曲集",
+      "kind": "書籍",
+      "room": "図書室",
+      "value": 3,
+      "lang": "フランス語",
+      "text": "海外の娯楽本。",
+      "entertainment": true,
+      "descriptions": {
+        "unused": "仏語戯曲集。まだ使用された様子はない。",
+        "used": "仏語戯曲集。扱われた跡が残っている。",
+        "tampered": "仏語戯曲集。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "priceJ",
+      "name": "宝飾品目録",
+      "kind": "書籍",
+      "room": "倉庫",
+      "value": 0,
+      "lang": "日本語",
+      "text": "宝石4点、金細工3点、懐中時計2点。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "宝飾品目録。まだ使用された様子はない。",
+        "used": "宝飾品目録。扱われた跡が残っている。",
+        "tampered": "宝飾品目録。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "priceA",
+      "name": "古美術評価録",
+      "kind": "書籍",
+      "room": "地下室",
+      "value": 0,
+      "lang": "フランス語",
+      "text": "天球儀5点、置物3点。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "古美術評価録。まだ使用された様子はない。",
+        "used": "古美術評価録。扱われた跡が残っている。",
+        "tampered": "古美術評価録。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "priceB",
+      "name": "古書取引録",
+      "kind": "書籍",
+      "room": "大広間",
+      "value": 0,
+      "lang": "ドイツ語",
+      "text": "希少なサイン本4点、仏語戯曲集3点。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "古書取引録。まだ使用された様子はない。",
+        "used": "古書取引録。扱われた跡が残っている。",
+        "tampered": "古書取引録。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "signature",
+      "name": "作家のサイン本",
+      "kind": "書籍",
+      "room": "図書室",
+      "value": 4,
+      "lang": "日本語",
+      "text": "著名な怪奇小説家のサイン入り。",
+      "entertainment": false,
+      "descriptions": {
+        "unused": "作家のサイン本。まだ使用された様子はない。",
+        "used": "作家のサイン本。扱われた跡が残っている。",
+        "tampered": "作家のサイン本。表面を拭い、手を加えた跡がある。"
+      }
+    },
+    {
+      "id": "goBoard",
+      "name": "囲碁盤と碁石",
+      "kind": "設備",
+      "room": "娯楽室",
+      "value": 0,
+      "lang": "日本語",
+      "text": "囲碁用の盤と碁石。"
+    },
+    {
+      "id": "billiardTable",
+      "name": "ビリヤード台",
+      "kind": "設備",
+      "room": "娯楽室",
+      "value": 0,
+      "lang": "日本語",
+      "text": "ビリヤード台。"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task0",
+      "kind": "read",
+      "title": "書籍を1冊読む",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task1",
+      "kind": "read",
+      "title": "外国語の書籍を読む",
+      "points": 2,
+      "require": "foreign",
+      "copies": 4
+    },
+    {
+      "id": "task2",
+      "kind": "inspect",
+      "title": "物品を1個調べる",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task3",
+      "kind": "take",
+      "title": "物品を1個持ち出す",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task4",
+      "kind": "give",
+      "title": "物品を誰かに譲る",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task5",
+      "kind": "place",
+      "title": "館内に物品を配置する",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task6",
+      "kind": "go",
+      "title": "二人で囲碁をする",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task7",
+      "kind": "billiards",
+      "title": "二人でビリヤードをする",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task8",
+      "kind": "jointRead",
+      "title": "二人で娯楽本を読む",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task9",
+      "kind": "cook",
+      "title": "料理を作る",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task10",
+      "kind": "tea",
+      "title": "お茶を淹れる",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task11",
+      "kind": "serve",
+      "title": "飲食物を誰かに渡す",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task12",
+      "kind": "harvest",
+      "title": "植物を採取する",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task13",
+      "kind": "guard",
+      "title": "守衛に話を聞く",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task14",
+      "kind": "armor",
+      "title": "鎧武者を調べる",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task15",
+      "kind": "body",
+      "title": "遺体を調べる",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task16",
+      "kind": "face",
+      "title": "遺体の表情を変える",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task17",
+      "kind": "wipe",
+      "title": "現場を清掃する",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task18",
+      "kind": "read",
+      "title": "新しい書籍を読む",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task19",
+      "kind": "invite",
+      "title": "主人を誘う",
+      "points": 2,
+      "require": null,
+      "copies": 4
+    },
+    {
+      "id": "task20",
+      "kind": "inspect",
+      "title": "使用された物品を調べる",
+      "points": 1,
+      "require": "used",
+      "copies": 4
+    },
+    {
+      "id": "task21",
+      "kind": "take",
+      "title": "書籍を持ち出す",
+      "points": 1,
+      "require": "book",
+      "copies": 4
+    },
+    {
+      "id": "task22",
+      "kind": "send",
+      "title": "一方的な私信を送る",
+      "points": 1,
+      "require": null,
+      "copies": 4
+    }
+  ],
+  "rules": {
+    "nightAP": 15,
+    "morningAP": 10,
+    "requiredSleep": 3,
+    "killPoints": 5,
+    "workPoints": 2,
+    "readPoints": 1,
+    "exclusivePoints": 2,
+    "affinityPoints": 3,
+    "theftPoints": 3,
+    "poisonPoints": 4,
+    "jointReadJapanese": 1,
+    "jointReadForeign": 2,
+    "mixAP": 1,
+    "inviteAP": 0,
+    "giftValue": 1,
+    "tamperAP": 2,
+    "targetItemPoints": 3
+  },
+  "provisional": [
+    "共同読書は日本語1AP・外国語2AP。双方に読解能力を要求。",
+    "毒A/Bの再摂取は各摂取ごとに発症。毒Cは均衡でタイマー解除、不均衡の再成立から2時間。",
+    "解毒剤は全毒に対応。",
+    "配点・カード構成はテスト用暫定値。",
+    "金品要求は各PC1回、価値1。一般物品の工作は2AP。",
+    "PCへの飲食物提供は譲渡のみ。本人が1APで飲食する。",
+    "探究の指定物品は天球儀。取得時3点、保持不要。独占は最終精算時に判定。",
+    "招待は現在より後の主人室予定を先頭から1枠変更。残り枠がなければ実行不可。"
+  ],
+  "rankings": {
+    "go": [
+      "writer",
+      "soldier",
+      "guide",
+      "heir",
+      "student",
+      "master",
+      "actor"
+    ],
+    "billiards": [
+      "actor",
+      "writer",
+      "guide",
+      "soldier",
+      "master",
+      "student",
+      "heir"
+    ]
+  },
+  "initialItems": [
+    {
+      "id": "jewel",
+      "character": "heir",
+      "name": "家伝の宝石",
+      "kind": "宝石",
+      "value": 4
+    },
+    {
+      "id": "saber",
+      "character": "soldier",
+      "name": "サーベル",
+      "kind": "凶器",
+      "value": 0
+    },
+    {
+      "id": "herbal",
+      "character": "student",
+      "name": "薬草学の本",
+      "kind": "書籍",
+      "value": 1,
+      "text": "毒A：1時間、毒B：2時間。毒C：不均衡が2時間続くと発症。解毒剤は毒を打ち消す。"
+    }
+  ],
+  "costs": {
+    "inspect": 1,
+    "deep": 1,
+    "take": 1,
+    "harvest": 1,
+    "guard": 2,
+    "armor": 1,
+    "blade": 2,
+    "cook": 2,
+    "tea": 1,
+    "kill": 3,
+    "body": 1,
+    "deepBody": 1,
+    "face": 2,
+    "hide": 2,
+    "moveBody": 3,
+    "wipe": 2,
+    "steal": 2,
+    "eat": 1,
+    "fireplace": 1,
+    "askMoney": 1,
+    "roomSearch": 1,
+    "message": 2,
+    "discard": 1,
+    "go": 2,
+    "billiards": 2,
+    "readJapanese": 1,
+    "readForeign": 2
+  },
+  "explorationTarget": "orb",
+  "mainCards": {
+    "殺意": "主人の殺害と遺体・現場の工作。殺害点は真相確定時に精算。配点は暫定。",
+    "金銭": "自動返還後に持ち帰る財物の価値を得点する。",
+    "探究": "異なる本を読む。終了時の独占読書、指定物品の取得で加点。",
+    "親密": "対象者との料理・対局・娯楽本の共同読書。",
+    "嫌悪": "対象者への毒の摂取、対象者からの窃盗。"
+  },
+  "confirmed": [
+    "大広間開始・60分固定・主人室4/8。",
+    "招待は予定のみ変更。即時移動しない。",
+    "処理順：鐘→NPC移動→PC移動→毒発症→PCアクション→病死。",
+    "朝の調査は全館・他人の所持品も対象。他人の所持品は調査のみ、その他の取得可能物は取得可。",
+    "通常調査なしの深い調査は禁止。二度目の清掃は禁止。",
+    "誘導と真犯人はGMが申告とログを照合して判定。",
+    "通知は行動別の暫定通知を維持。女優は盗難による睡眠減少のみ免除。殺害点は死亡時の目的型で判定。",
+    "T3摂取の毒AはT4の移動後・アクション前に発症。毒B/Cは2ターン後。",
+    "鐘を選んだ人物は他の人物より早く大広間へ移動して鐘を鳴らす。その後NPCと他のPCが移動する。"
+  ]
+}
