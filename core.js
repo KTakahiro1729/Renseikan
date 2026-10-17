@@ -31,10 +31,10 @@ export function createGame({schedule=DEFAULT_SCHEDULE, characters=CHARS.map(x=>x
  for(const p of players)for(const template of GAME_DATA.initialItems.filter(x=>x.character===p.character)){const item=makeItem({...template,id:`personal_${p.id}_${template.id}`,room:null});items[item.id]={...item,holder:p.id,source:'personal',ownerCharacter:p.character};}
 
  const deck=shuffle(TASK_TEMPLATES.flatMap(t=>Array.from({length:t.copies},(_,i)=>({...t,id:`${t.id}_${i}`}))));
- const state={schema:2,id:uid('room').slice(-7),rev:0,phase:'lobby',step:'planning',turn:0,morning:0,
+ const state={schema:3,id:uid('room').slice(-7),rev:0,phase:'lobby',step:'planning',turn:0,morning:0,
   players,items,deck,events:[],nextSeq:1, gmNotes:'', settings:{schedule:[...schedule],illness,trigger},
   master:{alive:true,location:'大広間',schedule:[...schedule],invites:0,death:null,face:'平穏',hidden:false,bodyRoom:null,
-   traces:[],poisons:[],lastInvitation:null,bodyCarrier:null},
+   traces:[],lastInvitation:null,bodyCarrier:null},
   pendingEffects:[],lastBell:-100,bellHistory:[],hallHistory:[],deviceFired:false,
   verdict:null,runoffOptions:null,ballotRound:1,voteHistory:[],result:null};
  for(const p of players){ for(let i=0;i<4;i++)p.hand.push(state.deck.pop()); }
@@ -143,16 +143,9 @@ function kill(s,cause,culprits,actor,details={}){if(!s.master.alive)return;
 }
 function ingest(s,consumer,food){if(!food.poison)return;
  const type=food.poison.type;
- if(type==='C'){
-  const target=consumer==='master'?s.master:s.players[consumer];target.poisons??=[];
-  const before=target.poisons.reduce((n,x)=>n+(x.component==='a'?1:-1),0);
-  target.poisons.push({type:'C',component:food.poison.component});
-  const after=target.poisons.reduce((n,x)=>n+(x.component==='a'?1:-1),0);
-  if(!after){for(const e of s.pendingEffects)if(e.target===consumer&&e.type==='C')e.active=false;return;}
-  if(before)return;
- }
+ if(!['A','B'].includes(type))throw Error('未対応の毒です');
  const effect={target:consumer,type,due:s.turn+(type==='A'?1:2),poisoner:food.poison.actor,
-  unbalanced:type==='C',active:true};
+  active:true};
  s.pendingEffects.push(effect);
  log(s,'POISON_INGEST',food.poison.actor,'毒物が摂取された',{consumer,type,due:effect.due});
  if(consumer!=='master'){
@@ -166,7 +159,7 @@ function consumeFood(s,item,consumer){
  if(item.poison?.type==='sleep'){if(consumer!=='master')s.players[consumer].sleep+=0.5;}
  else if(item.poison?.type==='antidote'){
   for(const e of s.pendingEffects)if(e.target===consumer)e.active=false;
-  const target=consumer==='master'?s.master:s.players[consumer];target.poisons=[];
+  const target=consumer==='master'?s.master:s.players[consumer];
   if(consumer!=='master'){target.required-=target.poisonPenalty;target.poisonPenalty=0;}
  }else ingest(s,consumer,item);
 }
@@ -176,10 +169,6 @@ function foodAtMaster(s){if(!s.master.alive)return;
 }
 function poisonBoundary(s){for(const effect of s.pendingEffects){if(!effect.active||effect.due>s.turn)continue;effect.active=false;
   if(effect.target==='master'){if(s.master.alive){
-    if(effect.type==='C'){
-      const imbalance=s.master.poisons.filter(x=>x.type==='C').reduce((a,x)=>a+(x.component==='a'?1:-1),0);
-      if(!imbalance)continue;
-    }
     kill(s,'毒殺',effect.poisoner!=null?[effect.poisoner]:[],effect.poisoner,{poisonType:effect.type});
   }}else{
     const p=s.players[effect.target];p.poisonEpisodes??=[];p.poisonEpisodes.push(effect.type);p.ap=Math.max(0,p.ap-5);p.required+=2;p.poisonPenalty+=2;
@@ -333,10 +322,10 @@ function doNightAction(s,id,cmd){const p=s.players[id];
  case 'cook':case 'tea':{canRoom('食堂');expense(p,COSTS[type]);
   const obj=makeItem([uid('food'),type==='cook'?'手料理':'淹れたお茶','飲食物',null,0]);obj.holder=id;obj.source='crafted';obj.created=s.turn;s.items[obj.id]=obj;
   log(s,'COOK',id,`飲食物を調理：${obj.name}`,{itemId:obj.id});scoreCommon(s,p,type);inform(s,p.location,id,'調理をした');break;}
- case 'mix':{requireIt();const poison=s.items[poisonId];if(it.consumed||it.holder!==id||it.kind!=='飲食物'||!poison||poison.holder!==id||!poison.effect)throw Error('混入条件を満たしていません');
+ case 'mix':{requireIt();const poison=s.items[poisonId];if(it.consumed||it.holder!==id||it.kind!=='飲食物'||!poison||poison.holder!==id||!['A','B','sleep','antidote'].includes(poison.effect))throw Error('混入条件を満たしていません');
   if(it.poison)throw Error('混入済み');expense(p,RULES.mixAP);
   const kind=poison.effect;
-  it.poison={type:kind,actor:id,component:poison.component};
+  it.poison={type:kind,actor:id};
   poison.holder=null;poison.room=null;poison.carrier=null;touch(it);
   log(s,'MIX',id,'飲食物へ薬品を混入',{itemId,type:kind});break;}
  case 'serve':{requireIt();if(it.consumed||it.holder!==id||it.kind!=='飲食物')throw Error('飲食物を所持していません');

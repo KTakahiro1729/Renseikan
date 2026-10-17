@@ -13,6 +13,7 @@ export function validateData(d){
  if(d.characters.length!==5)fail('キャラクターは5人');
  const rooms=new Set(d.rooms.map(r=>r.name));
  if(d.schedule.length!==8||d.schedule.filter(r=>r==='主人室').length!==4||d.schedule.some(r=>!rooms.has(r)))fail('予定は8枠、主人室4枠');
+ for(const i of [...d.items,...d.initialItems])if(i.effect&&!['A','B','sleep','antidote'].includes(i.effect))fail(i.id+' の効能が未対応');
  for(const i of d.items){if(!rooms.has(i.room))fail(i.id+' の部屋が不明');if(!Number.isFinite(i.value)||i.value<0)fail(i.id+' の価値が不正');}
  for(const t of d.tasks)if(!Number.isInteger(t.copies)||t.copies<0||!Number.isFinite(t.points)||t.points<0)fail(t.id+' の枚数／点数が不正');
  if(d.tasks.reduce((n,t)=>n+t.copies,0)<20)fail('タスクは20枚以上必要');
